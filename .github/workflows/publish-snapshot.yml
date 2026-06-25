@@ -40,6 +40,7 @@ jobs:
           path: target/UnlimitedNametags.jar
 
       - name: Publish SNAPSHOT artifacts
+        if: ${{ secrets.MAVEN_CENTRAL_USERNAME != '' && secrets.GPG_PRIVATE_KEY != '' }}
         run: >
           bash ./gradlew :common:publish :api:publish :api-paper:publish
           -Pversion=${{ env.SNAPSHOT_VERSION }}

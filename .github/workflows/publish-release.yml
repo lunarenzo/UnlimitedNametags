@@ -55,6 +55,7 @@ jobs:
           path: target/UnlimitedNametags.jar
 
       - name: Publish release artifacts
+        if: ${{ secrets.MAVEN_CENTRAL_USERNAME != '' && secrets.GPG_PRIVATE_KEY != '' }}
         run: >
           bash ./gradlew :common:publish :api:publish :api-paper:publish
           -Pversion=$VERSION
@@ -66,6 +67,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Release reminder
+        if: ${{ secrets.MAVEN_CENTRAL_USERNAME != '' && secrets.GPG_PRIVATE_KEY != '' }}
         run: |
           echo "Release artifacts uploaded to the Maven Central staging repository."
           echo "Open https://central.sonatype.com/ → Deployments → Refresh → Publish for version $VERSION."
