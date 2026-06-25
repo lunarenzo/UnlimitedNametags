@@ -29,6 +29,16 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - name: Build Plugin JAR
+        run: |
+          bash ./gradlew :paper:shadowJar -Pversion=${{ env.SNAPSHOT_VERSION }} --no-daemon
+
+      - name: Upload Downloadable Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnlimitedNametags-SNAPSHOT
+          path: target/UnlimitedNametags.jar
+
       - name: Publish SNAPSHOT artifacts
         run: >
           bash ./gradlew :common:publish :api:publish :api-paper:publish
@@ -39,3 +49,4 @@ jobs:
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.GPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.GPG_PASSPHRASE }}
+

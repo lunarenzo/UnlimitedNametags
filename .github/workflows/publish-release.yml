@@ -2,6 +2,8 @@ name: Publish Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
   workflow_dispatch:
@@ -29,8 +31,11 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "VERSION=${{ inputs.version }}" >> "$GITHUB_ENV"
-          else
+          elif [[ "${{ github.ref_name }}" == v* ]]; then
             echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          else
+            gradle_ver=$(grep "^version" gradle.properties | cut -d'=' -d' ' -f2)
+            echo "VERSION=${gradle_ver}" >> "$GITHUB_ENV"
           fi
 
       - name: Set up Java
@@ -38,6 +43,16 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+
+      - name: Build Plugin JAR
+        run: |
+          bash ./gradlew :paper:shadowJar -Pversion=$VERSION --no-daemon
+
+      - name: Upload Downloadable Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnlimitedNametags-Release
+          path: target/UnlimitedNametags.jar
 
       - name: Publish release artifacts
         run: >
