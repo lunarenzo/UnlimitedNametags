@@ -243,7 +243,7 @@ public class NameTagManager implements UntNametagManagerPaper {
                     }
                     final Player owner = paperRow(tag).getOwner();
                     final boolean shiftBlocked = shiftSystemBlocked.getOrDefault(owner.getUniqueId(), false);
-                    final boolean sneakEff = tag.isSneaking() && !shiftBlocked;
+                    final boolean sneakEff = owner != null && owner.isSneaking() && !shiftBlocked;
                     tag.applyObscuredLineOfSightPresentation(true, sneakB, obscB, maxSq, sneakEff);
                 }
             }
@@ -889,9 +889,10 @@ public class NameTagManager implements UntNametagManagerPaper {
         final boolean shadowed = displayGroup.effectiveBackground().shadowed();
         final Settings.ThroughWallMode throughWallMode = plugin.getConfigManager().getSettings()
                 .getVisibility().getThroughWallMode();
+        final Player owner = paperRow(display).getOwner();
         final boolean seeThrough = throughWallMode == Settings.ThroughWallMode.SEE_THROUGH
                 && displayGroup.effectiveBackground().seeThrough()
-                && !display.isSneaking();
+                && (owner != null && !owner.isSneaking());
         final int backgroundColor = displayGroup.effectiveBackground().getArgb();
 
         if (force || meta.isShadow() != shadowed) {
@@ -1391,7 +1392,9 @@ public class NameTagManager implements UntNametagManagerPaper {
             if (tag.isTextDisplay()) {
                 applyTextVisualState(tag, tag.getDisplayGroup(), true);
                 if (throughWallMode != Settings.ThroughWallMode.OBSCURED) {
-                    tag.setTextOpacity(tag.isSneaking() ? sneakOpacity : (byte) -1);
+                    final Player owner = paperRow(tag).getOwner();
+                    final boolean isSneaking = owner != null && owner.isSneaking();
+                    tag.setTextOpacity(isSneaking ? sneakOpacity : (byte) -1);
                 }
             }
         }));
