@@ -900,8 +900,10 @@ public class NameTagManager implements UntNametagManagerPaper {
         if (force || meta.getBackgroundColor() != backgroundColor) {
             meta.setBackgroundColor(backgroundColor);
         }
-        if (force || meta.isSeeThrough() != seeThrough) {
-            meta.setSeeThrough(seeThrough);
+        if (throughWallMode != Settings.ThroughWallMode.OBSCURED) {
+            if (force || meta.isSeeThrough() != seeThrough) {
+                meta.setSeeThrough(seeThrough);
+            }
         }
     }
 
