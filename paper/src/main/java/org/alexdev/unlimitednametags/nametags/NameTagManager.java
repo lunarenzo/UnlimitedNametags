@@ -236,15 +236,43 @@ public class NameTagManager implements UntNametagManagerPaper {
         if (mode == Settings.ThroughWallMode.OBSCURED) {
             final byte sneakB = clampMcTextOpacity(s.getVisibility().getSneakOpacity());
             final byte obscB = clampMcTextOpacity(s.getVisibility().getThroughWallSettings().getOpacity());
+            final boolean floodgateEnabled = plugin.getHook(org.alexdev.unlimitednametags.hook.FloodgateHook.class).isPresent();
             for (final CopyOnWriteArrayList<PacketNameTag> tags : nameTags.values()) {
                 for (final PacketNameTag tag : tags) {
                     if (!tag.isTextDisplay()) {
                         continue;
                     }
-                    final Player owner = paperRow(tag).getOwner();
+                    final PaperNametagRow row = paperRow(tag);
+                    final Player owner = row.getOwner();
+                    if (owner == null) {
+                        continue;
+                    }
                     final boolean shiftBlocked = shiftSystemBlocked.getOrDefault(owner.getUniqueId(), false);
-                    final boolean sneakEff = owner != null && owner.isSneaking() && !shiftBlocked;
+                    final boolean sneakEff = owner.isSneaking() && !shiftBlocked;
                     tag.applyObscuredLineOfSightPresentation(true, sneakB, obscB, maxSq, sneakEff);
+
+                    if (floodgateEnabled) {
+                        final List<Player> viewers = plugin.getTrackerManager().getWhoTracks(owner);
+                        for (final Player viewer : viewers) {
+                            if (viewer.getUniqueId().equals(owner.getUniqueId())) {
+                                continue;
+                            }
+                            if (isFloodgatePlayer(viewer)) {
+                                final double distSq = viewer.getLocation().distanceSquared(owner.getLocation());
+                                final boolean withinRange = distSq <= maxSq;
+                                final boolean hasLoS = withinRange && viewer.hasLineOfSight(owner);
+                                if (sneakEff && !hasLoS) {
+                                    if (row.canPlayerSee(viewer)) {
+                                        row.hideFromPlayer(viewer);
+                                    }
+                                } else {
+                                    if (!row.canPlayerSee(viewer)) {
+                                        row.showToPlayer(viewer);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         } else if (mode == Settings.ThroughWallMode.HIDE) {
@@ -277,6 +305,12 @@ public class NameTagManager implements UntNametagManagerPaper {
                 }
             }
         }
+    }
+
+    private boolean isFloodgatePlayer(final Player player) {
+        return plugin.getHook(org.alexdev.unlimitednametags.hook.FloodgateHook.class)
+                .map(hook -> hook.isFloodgatePlayer(player))
+                .orElse(false);
     }
 
     private static byte clampMcTextOpacity(final int raw) {
